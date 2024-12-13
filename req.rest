@@ -1,0 +1,4 @@
+@url = http://localhost:3003
+
+###
+GET {{url}}?audiencia=0845991-76.2024.8.19.0209
