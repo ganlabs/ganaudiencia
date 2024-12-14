@@ -9,12 +9,10 @@ import (
 	"time"
 )
 
-// LoggingMiddleware logs detailed information about each HTTP request and response
 func LoggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 
-		// Read and log the request body
 		var requestBody string
 		if r.Body != nil {
 			bodyBytes, err := io.ReadAll(r.Body)
@@ -24,11 +22,9 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 			}
 		}
 
-		// Wrap ResponseWriter to capture response details
 		responseRecorder := &responseWriter{ResponseWriter: w, body: &bytes.Buffer{}, statusCode: http.StatusOK}
 		next.ServeHTTP(responseRecorder, r)
 
-		// Log details as JSON
 		logEntry := map[string]interface{}{
 			"method":        r.Method,
 			"url":           r.URL.String(),

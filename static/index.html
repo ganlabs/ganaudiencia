@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Processos</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #e0c300;
+      /* Amarelo ovo mais escuro */
+      min-height: 100vh;
+      position: relative;
+    }
+
+    /* Logo no canto superior esquerdo */
+    #logo {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      width: 50px;
+      height: 50px;
+    }
+
+    #container {
+      width: 90%;
+      max-width: 800px;
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      margin: 5% auto;
+      display: flex;
+      flex-direction: column;
+      max-height: 90%;
+    }
+
+    #header {
+      flex-shrink: 0;
+    }
+
+    #table-container {
+      flex-grow: 1;
+      overflow-y: auto;
+      margin-top: 20px;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    textarea {
+      width: 100%;
+      height: 100px;
+      margin: 10px 0;
+    }
+
+    button {
+      display: inline-block;
+      margin: 10px 5px;
+      padding: 15px 30px;
+      font-size: 16px;
+      background-color: #e0c300;
+      border: none;
+      border-radius: 5px;
+      color: #000000;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    button:hover {
+      background-color: #d1ae00;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+
+    table th,
+    table td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: center;
+      white-space: nowrap;
+      user-select: none;
+      /* Previne seleção nativa do navegador */
+    }
+
+    table th {
+      background-color: #f0f0f0;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    .selected {
+      background-color: #b3d4fc;
+      /* Destaque para células selecionadas */
+    }
+  </style>
+</head>
+
+<body>
+  <img id="logo" src="static/logo.png" alt="Logo">
+
+  <div id="container">
+    <div id="header">
+      <h1>Processos</h1>
+      <h3>Contagem de Processos: <span id="count">0</span></h3>
+      <h3>Consultados: <span id="consulted">0</span></h3>
+      <textarea id="processos" oninput="updateCount()"></textarea>
+      <div style="text-align: center;">
+        <button onclick="validateAndFetch()">Iniciar</button>
+        <button id="copy-audiencias" onclick="copyAudiencias()">Copiar Audiências</button>
+        <button id="copy-tabela" onclick="copyTabela()">Copiar Tabela</button>
+        <button id="clear-selection" onclick="clearSelection()">Limpar Seleção</button>
+      </div>
+    </div>
+    <div id="table-container">
+      <table id="process-table">
+        <thead>
+          <tr>
+            <th>Processo</th>
+            <th>Audiência</th>
+          </tr>
+        </thead>
+        <tbody id="results"></tbody>
+      </table>
+    </div>
+  </div>
+  <script>
+    function updateCount() {
+      const rawText = document.getElementById('processos').value;
+      const processList = rawText.split('\n').map(p => formatProcess(p.replace(/\D/g, ''))).filter(p => p.match(/^\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4}$/));
+      document.getElementById('count').innerText = processList.length;
+    }
+
+    function formatProcess(processo) {
+      if (processo.length === 20) {
+        return processo.replace(/^(\d{7})(\d{2})(\d{4})(\d)(\d{2})(\d{4})$/, '$1-$2.$3.$4.$5.$6');
+      }
+      return processo;
+    }
+
+    function validateAndFetch() {
+      const rawText = document.getElementById('processos').value;
+      const processList = rawText.split('\n').map(p => formatProcess(p.replace(/\D/g, ''))).filter(p => p.match(/^\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4}$/));
+      document.getElementById('count').innerText = processList.length;
+      document.getElementById('consulted').innerText = 0; // Zera consultados ao clicar em Iniciar
+
+      const resultsTable = document.getElementById('results');
+      resultsTable.innerHTML = '';
+
+      // Adiciona as linhas da tabela primeiro, para manter a ordem
+      const rows = processList.map(processo => {
+        const row = document.createElement('tr');
+        row.innerHTML = `<td>${processo}</td><td>Aguardando...</td>`;
+        resultsTable.appendChild(row);
+        return { processo, row };
+      });
+
+      // As requisições em paralelo
+      rows.forEach(({ processo, row }) => {
+        const rawProcess = processo.replace(/\D/g, '');
+        fetchAudiencia(rawProcess, row.cells[1], true);
+      });
+    }
+
+    function fetchAudiencia(rawProcess, cell, incrementCount = false) {
+      cell.textContent = 'Aguardando...';
+      fetch(`http://localhost:3003/audiencia?processo=${rawProcess}`)
+        .then(response => response.json())
+        .then(data => {
+          const audiencia = data.valida ? data.audiencia_data : data.classe;
+          cell.textContent = audiencia;
+          if (incrementCount) {
+            document.getElementById('consulted').innerText = parseInt(document.getElementById('consulted').innerText) + 1;
+          }
+        })
+        .catch(error => {
+          console.error('Erro:', error);
+          cell.innerHTML = `<a href="#" style="color:red;text-decoration:underline;" onclick="retryProcess('${rawProcess}', this)">Erro ao consultar</a>`;
+        });
+    }
+
+    function retryProcess(rawProcess, linkElement) {
+      const cell = linkElement.parentNode;
+      fetchAudiencia(rawProcess, cell);
+    }
+
+    function copyAudiencias() {
+      const table = document.getElementById('process-table');
+      const rows = table.querySelectorAll('tbody tr');
+      const audiencias = [];
+      rows.forEach(row => {
+        const audienciaCell = row.cells[1]; // segunda coluna
+        if (audienciaCell) {
+          audiencias.push(audienciaCell.textContent.trim());
+        }
+      });
+
+      const textToCopy = audiencias.join('\n');
+      navigator.clipboard.writeText(textToCopy)
+        .then(() => console.log('Audiências copiadas!'))
+        .catch(err => console.error('Erro ao copiar audiências:', err));
+    }
+
+    function copyTabela() {
+      const table = document.getElementById('process-table');
+      const rows = table.querySelectorAll('tbody tr');
+      const lines = [];
+
+      rows.forEach(row => {
+        const cells = row.querySelectorAll('td');
+        const lineData = [];
+        cells.forEach(cell => {
+          lineData.push(cell.textContent.trim());
+        });
+        // separando por tabulação
+        lines.push(lineData.join('\t'));
+      });
+
+      const textToCopy = lines.join('\n');
+      navigator.clipboard.writeText(textToCopy)
+        .then(() => console.log('Tabela copiada!'))
+        .catch(err => console.error('Erro ao copiar tabela:', err));
+    }
+
+    // Copiar usando Ctrl+C para células selecionadas
+    document.addEventListener('keydown', (e) => {
+      if (e.ctrlKey && e.key === 'c') {
+        const selectedCells = document.querySelectorAll('.selected');
+        const values = Array.from(selectedCells).map(cell => cell.textContent);
+        navigator.clipboard.writeText(values.join('\n'));
+        e.preventDefault();
+      }
+    });
+
+    let lastSelectedCell = null;
+    document.getElementById('process-table').addEventListener('click', (event) => {
+      if (event.target.tagName === 'TD') {
+        const cell = event.target;
+        const columnIndex = cell.cellIndex;
+
+        if (event.shiftKey && lastSelectedCell) {
+          const lastColumnIndex = lastSelectedCell.cellIndex;
+          if (columnIndex === lastColumnIndex) {
+            selectRange(lastSelectedCell, cell);
+          } else {
+            console.warn('Seleção com Shift só funciona na mesma coluna.');
+          }
+        } else {
+          toggleSelection(cell);
+        }
+        lastSelectedCell = cell;
+      }
+    });
+
+    function selectRange(startCell, endCell) {
+      const table = document.getElementById('process-table');
+      const rows = Array.from(table.rows);
+      const startRowIndex = startCell.parentElement.rowIndex;
+      const endRowIndex = endCell.parentElement.rowIndex;
+      const columnIndex = startCell.cellIndex;
+
+      const [minRowIndex, maxRowIndex] = [Math.min(startRowIndex, endRowIndex), Math.max(startRowIndex, endRowIndex)];
+      for (let i = minRowIndex; i <= maxRowIndex; i++) {
+        const cell = rows[i].cells[columnIndex];
+        cell.classList.add('selected');
+      }
+    }
+
+    function toggleSelection(cell) {
+      cell.classList.toggle('selected');
+    }
+
+    // Limpar seleção
+    function clearSelection() {
+      const selectedCells = document.querySelectorAll('.selected');
+      selectedCells.forEach(cell => {
+        cell.classList.remove('selected');
+      });
+    }
+  </script>
+</body>
+
+</html>
