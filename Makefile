@@ -5,8 +5,8 @@ all: build
 
 build:
 	@echo "Building..."
-	@go build -o ganaudiencia .
-	@GOOS=windows go build -o ganaudiencia.exe .
+	@go build -o dist/ganaudiencia .
+	@GOOS=windows go build -o dist/ganaudiencia.exe .
 
 
 # Run the application

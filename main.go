@@ -90,17 +90,16 @@ var staticFiles embed.FS
 func main() {
 
 	switch environment {
-	case "local":
-		log.Println("Executando em ambiente local.")
-		port = GenerateRandomPort(998, 7001)
+	case "development":
+		log.Println("Executando em ambiente de desenvolvimento.")
+		port = 3003
 		baseURL = fmt.Sprintf("http://localhost:%d", port)
 	case "docker":
 		log.Println("Executando em ambiente docker.")
 		port = 3003
-		// baseURL = fmt.Sprintf("http://ganaudiencia:%d", port)
 	default:
-		log.Println("Executando em ambiente de desenvolvimento.")
-		port = 3003
+		log.Println("Executando em ambiente local.")
+		port = GenerateRandomPort(998, 7001)
 		baseURL = fmt.Sprintf("http://localhost:%d", port)
 	}
 
