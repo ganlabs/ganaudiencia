@@ -4,30 +4,38 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Processos</title>
+  <title>Audiências</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       margin: 0;
       padding: 0;
       background-color: #e0c300;
-      /* Amarelo ovo mais escuro */
       min-height: 100vh;
       position: relative;
     }
 
-    /* Logo no canto superior esquerdo */
+    h1,
+    h3,
+    th,
+    td,
+    a {
+      color: #383838;
+    }
+
+    /* Logo fixo no topo esquerdo */
     #logo {
-      position: absolute;
+      position: fixed;
       top: 10px;
       left: 10px;
       width: 50px;
       height: 50px;
+      z-index: 9999;
     }
 
     #container {
       width: 90%;
-      max-width: 800px;
+      max-width: 1000px;
       background: #ffffff;
       padding: 20px;
       border-radius: 8px;
@@ -36,16 +44,20 @@
       display: flex;
       flex-direction: column;
       max-height: 90%;
+      position: relative;
     }
 
     #header {
       flex-shrink: 0;
     }
 
+    /* Deixa o container da tabela oculto inicialmente */
     #table-container {
       flex-grow: 1;
       overflow-y: auto;
       margin-top: 20px;
+      display: none;
+      /* Ocultando inicialmente */
     }
 
     h1 {
@@ -58,15 +70,21 @@
       margin: 10px 0;
     }
 
+    #button-container {
+      display: flex;
+      flex-wrap: nowrap;
+      justify-content: center;
+      gap: 5px;
+      margin: 10px 0;
+    }
+
     button {
-      display: inline-block;
-      margin: 10px 5px;
-      padding: 15px 30px;
-      font-size: 16px;
+      padding: 10px 15px;
+      font-size: 14px;
       background-color: #e0c300;
       border: none;
       border-radius: 5px;
-      color: #000000;
+      color: #242424;
       cursor: pointer;
       font-weight: bold;
     }
@@ -88,7 +106,6 @@
       text-align: center;
       white-space: nowrap;
       user-select: none;
-      /* Previne seleção nativa do navegador */
     }
 
     table th {
@@ -100,25 +117,43 @@
 
     .selected {
       background-color: #b3d4fc;
-      /* Destaque para células selecionadas */
+    }
+
+    a,
+    a:visited,
+    a:active {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
     }
   </style>
 </head>
 
 <body>
-  <img id="logo" src="static/logo.png" alt="Logo">
+  <a href=".">
+    <img id="logo" src="static/logo.png" alt="Logo">
+  </a>
+
+  <script>
+    var baseUrl = "{{.BaseURL}}";
+  </script>
 
   <div id="container">
     <div id="header">
-      <h1>Processos</h1>
+      <h1>Audiências</h1>
       <h3>Contagem de Processos: <span id="count">0</span></h3>
       <h3>Consultados: <span id="consulted">0</span></h3>
       <textarea id="processos" oninput="updateCount()"></textarea>
-      <div style="text-align: center;">
+      <div id="button-container">
         <button onclick="validateAndFetch()">Iniciar</button>
         <button id="copy-audiencias" onclick="copyAudiencias()">Copiar Audiências</button>
         <button id="copy-tabela" onclick="copyTabela()">Copiar Tabela</button>
         <button id="clear-selection" onclick="clearSelection()">Limpar Seleção</button>
+        <button onclick="exportTableToCSV()">Exportar CSV</button>
+        <button onclick="window.location.href = '/sair'">Sair</button>
       </div>
     </div>
     <div id="table-container">
@@ -153,10 +188,12 @@
       document.getElementById('count').innerText = processList.length;
       document.getElementById('consulted').innerText = 0; // Zera consultados ao clicar em Iniciar
 
+      // Exibe o container da tabela ao iniciar as consultas
+      document.getElementById('table-container').style.display = 'block';
+
       const resultsTable = document.getElementById('results');
       resultsTable.innerHTML = '';
 
-      // Adiciona as linhas da tabela primeiro, para manter a ordem
       const rows = processList.map(processo => {
         const row = document.createElement('tr');
         row.innerHTML = `<td>${processo}</td><td>Aguardando...</td>`;
@@ -164,33 +201,42 @@
         return { processo, row };
       });
 
-      // As requisições em paralelo
       rows.forEach(({ processo, row }) => {
         const rawProcess = processo.replace(/\D/g, '');
-        fetchAudiencia(rawProcess, row.cells[1], true);
+        // Chamadas normais, sem nocache, usando baseUrl
+        fetchAudiencia(rawProcess, row.cells[1], true, false);
       });
     }
 
-    function fetchAudiencia(rawProcess, cell, incrementCount = false) {
+    function fetchAudiencia(rawProcess, cell, incrementCount = false, nocache = false) {
       cell.textContent = 'Aguardando...';
-      fetch(`http://localhost:3003/audiencia?processo=${rawProcess}`)
-        .then(response => response.json())
+      let url = baseUrl + "/audiencia?processo=" + rawProcess;
+      if (nocache) {
+        url += "&nocache=true";
+      }
+
+      fetch(url)
+        .then(response => {
+          if (!response.ok) throw new Error('Erro na resposta do servidor');
+          return response.json();
+        })
         .then(data => {
           const audiencia = data.valida ? data.audiencia_data : data.classe;
-          cell.textContent = audiencia;
+          cell.innerHTML = `<a href="#" onclick="fetchAudiencia('${rawProcess}', this.parentNode, false, true); return false;">${audiencia}</a>`;
           if (incrementCount) {
-            document.getElementById('consulted').innerText = parseInt(document.getElementById('consulted').innerText) + 1;
+            const consultedEl = document.getElementById('consulted');
+            consultedEl.innerText = parseInt(consultedEl.innerText) + 1;
           }
         })
         .catch(error => {
           console.error('Erro:', error);
-          cell.innerHTML = `<a href="#" style="color:red;text-decoration:underline;" onclick="retryProcess('${rawProcess}', this)">Erro ao consultar</a>`;
+          cell.innerHTML = `<a href="#" style="color:red; text-decoration:none;" onclick="retryProcess('${rawProcess}', this)">Erro ao consultar</a>`;
         });
     }
 
     function retryProcess(rawProcess, linkElement) {
       const cell = linkElement.parentNode;
-      fetchAudiencia(rawProcess, cell);
+      fetchAudiencia(rawProcess, cell, false, true);
     }
 
     function copyAudiencias() {
@@ -198,7 +244,7 @@
       const rows = table.querySelectorAll('tbody tr');
       const audiencias = [];
       rows.forEach(row => {
-        const audienciaCell = row.cells[1]; // segunda coluna
+        const audienciaCell = row.cells[1];
         if (audienciaCell) {
           audiencias.push(audienciaCell.textContent.trim());
         }
@@ -221,7 +267,6 @@
         cells.forEach(cell => {
           lineData.push(cell.textContent.trim());
         });
-        // separando por tabulação
         lines.push(lineData.join('\t'));
       });
 
@@ -231,7 +276,6 @@
         .catch(err => console.error('Erro ao copiar tabela:', err));
     }
 
-    // Copiar usando Ctrl+C para células selecionadas
     document.addEventListener('keydown', (e) => {
       if (e.ctrlKey && e.key === 'c') {
         const selectedCells = document.querySelectorAll('.selected');
@@ -279,12 +323,48 @@
       cell.classList.toggle('selected');
     }
 
-    // Limpar seleção
     function clearSelection() {
       const selectedCells = document.querySelectorAll('.selected');
       selectedCells.forEach(cell => {
         cell.classList.remove('selected');
       });
+    }
+
+    function exportTableToCSV() {
+      const table = document.getElementById('process-table');
+      const rows = table.querySelectorAll('tr');
+      let csvContent = "";
+
+      rows.forEach((row) => {
+        const cells = row.querySelectorAll('th, td');
+        const rowData = [];
+        cells.forEach(cell => {
+          let text = cell.textContent.trim().replace(/"/g, '""');
+          rowData.push(`"${text}"`);
+        });
+        csvContent += rowData.join(',') + "\n";
+      });
+
+      const now = new Date();
+      const day = String(now.getDate()).padStart(2, '0');
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const year = now.getFullYear();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+
+      const fileName = `audiencias-${day}-${month}-${year}-${hours}-${minutes}.csv`;
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement('a');
+      a.href = url;
+      a.setAttribute('download', fileName);
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
     }
   </script>
 </body>

@@ -36,8 +36,8 @@ func ValidateFormat(input string) (string, error) {
 	return formattedInput, nil
 }
 
-func GenerateRandomPort() int {
+func GenerateRandomPort(quantity int, start int) int {
 	// Create a new random generator with a seed based on the current time
 	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
-	return rng.Intn(3000) + 12000
+	return rng.Intn(999) + 7000
 }

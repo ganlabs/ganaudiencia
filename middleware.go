@@ -26,13 +26,13 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(responseRecorder, r)
 
 		logEntry := map[string]interface{}{
-			"method":        r.Method,
-			"url":           r.URL.String(),
-			"headers":       r.Header,
-			"request_body":  requestBody,
-			"status":        responseRecorder.statusCode,
-			"response_body": responseRecorder.body.String(),
-			"duration":      time.Since(start).String(),
+			"method":       r.Method,
+			"url":          r.URL.String(),
+			"headers":      r.Header,
+			"request_body": requestBody,
+			"status":       responseRecorder.statusCode,
+			// "response_body": responseRecorder.body.String(),
+			"duration": time.Since(start).String(),
 		}
 
 		logData, err := json.Marshal(logEntry)
