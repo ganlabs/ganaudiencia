@@ -14,17 +14,20 @@ import (
 )
 
 type cacheEntry struct {
-	hearing  *hearing
+	hearing  Hearing
 	cachedAt time.Time
 }
 
 var (
 	cache       = make(map[string]*cacheEntry)
 	cacheMu     sync.RWMutex
-	environment = os.Getenv("ENVIRONMENT")
-	baseURL     = os.Getenv("BASE_URL")
+	Environment = os.Getenv("ENVIRONMENT")
+	BaseURL     = os.Getenv("BASE_URL")
 	port        int
 )
+
+//go:embed driver/*
+var Chromedriver embed.FS
 
 const cacheTTL = 3 * time.Hour
 
@@ -62,7 +65,12 @@ func getHearing(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sc := NewHearing()
+	sc, err := ScraperDispatcher(l)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Println(err)
+		return
+	}
 	h, err := sc.Scrape(l)
 
 	if err != nil {
@@ -74,12 +82,13 @@ func getHearing(w http.ResponseWriter, r *http.Request) {
 	if !noCache {
 		cacheMu.Lock()
 		cache[lawsuit] = &cacheEntry{
-			hearing:  &h,
+			hearing:  h,
 			cachedAt: time.Now(),
 		}
 		cacheMu.Unlock()
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(h)
 }
@@ -89,18 +98,18 @@ var staticFiles embed.FS
 
 func main() {
 
-	switch environment {
+	switch Environment {
 	case "development":
 		log.Println("Executando em ambiente de desenvolvimento.")
 		port = 3003
-		baseURL = fmt.Sprintf("http://localhost:%d", port)
+		BaseURL = fmt.Sprintf("http://localhost:%d", port)
 	case "docker":
 		log.Println("Executando em ambiente docker.")
 		port = 3003
 	default:
 		log.Println("Executando em ambiente local.")
 		port = GenerateRandomPort(998, 7001)
-		baseURL = fmt.Sprintf("http://localhost:%d", port)
+		BaseURL = fmt.Sprintf("http://localhost:%d", port)
 	}
 
 	staticContent, err := fs.Sub(staticFiles, "static")
@@ -120,7 +129,7 @@ func main() {
 		}
 
 		data := map[string]interface{}{
-			"BaseURL": baseURL,
+			"BaseURL": BaseURL,
 		}
 
 		err = t.Execute(w, data)

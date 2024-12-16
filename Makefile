@@ -68,8 +68,12 @@ docker-build:
 docker-up:
 	@docker compose up -d
 
+docker-up-dev:
+	@docker compose up
+
 docker-down:
 	@docker compose down
+	@docker image rm ganaudiencia-app:latest 
 
 
 .PHONY: all build run test clean watch

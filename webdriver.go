@@ -10,7 +10,7 @@ import (
 
 func GetWebdriver() (selenium.WebDriver, error) {
 	var caps selenium.Capabilities
-	var driver selenium.WebDriver
+	var webdriver selenium.WebDriver
 
 	switch runtime.GOOS {
 	case "windows":
@@ -38,46 +38,35 @@ func GetWebdriver() (selenium.WebDriver, error) {
 	var err error
 	var seleniumUrl string
 
-	switch environment {
-	case "development":
-		var driverport = GenerateRandomPort(999, 12000)
-		opts := []selenium.ServiceOption{}
-		driverPath, err := ExtractDriver()
-		if err != nil {
-			return nil, fmt.Errorf("erro ao extrair o driver: %w", err)
-		}
-		service, err := selenium.NewChromeDriverService(driverPath, driverport, opts...)
-		if err != nil {
-			return nil, fmt.Errorf("erro ao iniciar o serviço do ChromeDriver: %w", err)
-		}
-		log.Println(service)
-		seleniumUrl = fmt.Sprintf("http://localhost:%d/wd/hub", driverport)
-		driver, err = selenium.NewRemote(caps, seleniumUrl)
-		if err != nil {
-			return nil, fmt.Errorf("erro ao conectar ao WebDriver: %w", err)
-		}
+	switch Environment {
 	case "docker":
 		seleniumUrl = "http://selenium-hub:4444/wd/hub"
-		driver, err = selenium.NewRemote(caps, seleniumUrl)
+		webdriver, err = selenium.NewRemote(caps, seleniumUrl)
 	default:
 		var driverport = GenerateRandomPort(999, 12000)
-		opts := []selenium.ServiceOption{}
+		// opts := []selenium.ServiceOption{}
 		driverPath, err := ExtractDriver()
+
 		if err != nil {
 			return nil, fmt.Errorf("erro ao extrair o driver: %w", err)
 		}
-		service, err := selenium.NewChromeDriverService(driverPath, driverport, opts...)
+
+		service, err := selenium.NewChromeDriverService(driverPath, driverport)
 		if err != nil {
 			return nil, fmt.Errorf("erro ao iniciar o serviço do ChromeDriver: %w", err)
 		}
+		log.Printf("ChromeDriver iniciado na porta %d", driverport)
+		log.Printf("Acessar o navegador em http://localhost:%d/wd/hub", driverport)
+		log.Println("Para sair, pressione CTRL+C")
 		log.Println(service)
+		// defer service.Stop()
+
 		seleniumUrl = fmt.Sprintf("http://localhost:%d/wd/hub", driverport)
-		driver, err = selenium.NewRemote(caps, seleniumUrl)
+		webdriver, err = selenium.NewRemote(caps, seleniumUrl)
 		if err != nil {
 			return nil, fmt.Errorf("erro ao conectar ao WebDriver: %w", err)
 		}
 	}
-	log.Println("WebDriver URL:", seleniumUrl)
 
-	return driver, err
+	return webdriver, err
 }

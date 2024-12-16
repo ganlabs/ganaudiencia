@@ -1,4 +1,4 @@
-FROM golang:1.23-alpine as builder
+FROM golang:1.23-alpine AS builder
 
 WORKDIR /app
 
@@ -6,7 +6,7 @@ COPY . .
 
 RUN go build -o ganaudiencia .
 
-FROM scratch as runner
+FROM scratch AS runner
 
 WORKDIR /app
 

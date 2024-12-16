@@ -1,100 +1,45 @@
 package main
 
 import (
-	"embed"
 	"fmt"
 	"log"
-	"os"
-	"path/filepath"
 	"regexp"
-	"runtime"
 	"strings"
 	"time"
 
 	"github.com/tebeka/selenium"
 )
 
-type Hearing interface {
-	Scrape(lawsuit string) (hearing, error)
+type PjeRJ struct {
 }
 
-func (h *hearing) Scrape(lawsuit string) (hearing, error) {
-	mv, err := FetchMovements(lawsuit)
+func NewPjeRJ() Scraper {
+	return &PjeRJ{}
+}
+
+func (s *PjeRJ) Scrape(lawsuit string) (Hearing, error) {
+	mv, err := s.FetchMovements(lawsuit)
 	if err != nil {
 		log.Println(err)
-		return hearing{}, err
+		return Hearing{}, err
 	}
 
-	hd, ht := ExtractHearingDates(mv)
+	hd, ht := s.ExtractHearingDates(mv)
 	log.Println("Hearing date/time:", hd, ht)
 
-	hr := &hearing{
+	hr := Hearing{
 		Lawsuit:     lawsuit,
-		Class:       ExtractClass(mv[0]),
+		Class:       s.ExtractClass(mv[0]),
 		HearingDate: hd,
 		HearingTime: ht,
-		IsValid:     ValidateDate(hd),
+		IsValid:     s.ValidateDate(hd),
 		Movement:    mv,
 	}
 
-	return *hr, nil
+	return hr, nil
 }
 
-func NewHearing() Hearing {
-	return &hearing{}
-}
-
-type hearing struct {
-	Lawsuit     string   `json:"processo"`
-	Class       string   `json:"classe"`
-	HearingDate string   `json:"audiencia_data"`
-	HearingTime string   `json:"audiencia_hora"`
-	IsValid     bool     `json:"valida"`
-	Movement    []string `json:"movimento"`
-}
-
-func ExtractDriver() (string, error) {
-	// Determinar o nome do driver com base no sistema operacional
-	var chromedriverPath string
-	if runtime.GOOS == "windows" {
-		chromedriverPath = "driver/chromedriver.exe"
-	} else {
-		chromedriverPath = "driver/chromedriver"
-	}
-
-	// Ler o conteúdo do binário embutido
-	content, err := driver.ReadFile(chromedriverPath)
-	if err != nil {
-		return "", err
-	}
-
-	// Criar um diretório temporário para o driver
-	tempDir, err := os.MkdirTemp("", "chromedriver-*")
-	if err != nil {
-		return "", err
-	}
-
-	// Caminho completo do arquivo no diretório temporário
-	var tempFileName string
-	if runtime.GOOS == "windows" {
-		tempFileName = "chromedriver.exe"
-	} else {
-		tempFileName = "chromedriver"
-	}
-	tempFilePath := filepath.Join(tempDir, tempFileName)
-
-	// Escrever o conteúdo no arquivo temporário
-	if err := os.WriteFile(tempFilePath, content, 0755); err != nil {
-		return "", err
-	}
-
-	return tempFilePath, nil
-}
-
-//go:embed driver/*
-var driver embed.FS
-
-func FetchMovements(processNumber string) ([]string, error) {
+func (s *PjeRJ) FetchMovements(processNumber string) ([]string, error) {
 
 	driver, err := GetWebdriver()
 	if err != nil {
@@ -178,7 +123,7 @@ func FetchMovements(processNumber string) ([]string, error) {
 
 	movements = append(movements, classText)
 
-	err = FetchMovementsFromPage(driver, &movements)
+	err = s.FetchMovementsFromPage(driver, &movements)
 	if err != nil {
 		return nil, err
 	}
@@ -209,7 +154,7 @@ func FetchMovements(processNumber string) ([]string, error) {
 			break
 		}
 
-		err = FetchMovementsFromPage(driver, &movements)
+		err = s.FetchMovementsFromPage(driver, &movements)
 		if err != nil {
 			return nil, err
 		}
@@ -225,7 +170,7 @@ func FetchMovements(processNumber string) ([]string, error) {
 	return movements, nil
 }
 
-func FetchMovementsFromPage(driver selenium.WebDriver, movements *[]string) error {
+func (s *PjeRJ) FetchMovementsFromPage(driver selenium.WebDriver, movements *[]string) error {
 	table, err := driver.FindElement(selenium.ByXPATH, "/html/body/div[5]/div/div/div/div[2]/table/tbody/tr[2]/td/table/tbody/tr/td/div[5]/div[2]/table/tbody")
 	if err != nil {
 		return fmt.Errorf("erro ao localizar a tabela de movimentos: %w", err)
@@ -247,7 +192,7 @@ func FetchMovementsFromPage(driver selenium.WebDriver, movements *[]string) erro
 	return nil
 }
 
-func ExtractHearingDates(lines []string) (date string, time string) {
+func (s *PjeRJ) ExtractHearingDates(lines []string) (date string, time string) {
 	for _, line := range lines {
 		line = strings.ToUpper(line)
 
@@ -282,7 +227,7 @@ func ExtractHearingDates(lines []string) (date string, time string) {
 	return "01/01/1900", "00:00"
 }
 
-func ExtractClass(text string) string {
+func (s *PjeRJ) ExtractClass(text string) string {
 	text = strings.ToUpper(text)
 	if strings.Contains(text, "JUIZADO ESPECIAL") {
 		return "JEC"
@@ -292,7 +237,7 @@ func ExtractClass(text string) string {
 	return text
 }
 
-func ValidateDate(date string) bool {
+func (s *PjeRJ) ValidateDate(date string) bool {
 	d, err := time.Parse("02/01/2006", date)
 
 	if err != nil {
