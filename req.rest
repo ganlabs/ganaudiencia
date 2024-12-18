@@ -1,11 +1,19 @@
 @url = http://localhost:3003
 
-@processo = 0817037-95.2024.8.19.0087
+#1066543-65.2024.8.26.0506
+#1002303-27.2024.8.26.0390
+#1014672-66.2024.8.26.0127
+
+
+@processorj = 0967745-27.2024.8.19.0001
+@processosp = 1066543-65.2024.8.26.0506
 
 
 ###
-GET {{url}}/audiencia?processo={{processo}}
+GET {{url}}/audiencia?processo={{processorj}}
 
+###
+GET {{url}}/audiencia?processo={{processosp}}
 
 ###
 GET {{url}}

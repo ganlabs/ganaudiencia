@@ -98,6 +98,14 @@ var staticFiles embed.FS
 
 func main() {
 
+	corsConfig := CORSConfig{
+		AllowedOrigins:   []string{"http://localhost:3000", "http://localhost:3000", "http://localhost:5173", "https://seusite.com"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Content-Type", "Authorization"},
+		AllowCredentials: true,
+		MaxAge:           3600, // 1 hora
+	}
+
 	switch Environment {
 	case "development":
 		log.Println("Executando em ambiente de desenvolvimento.")
@@ -152,7 +160,7 @@ func main() {
 		}
 	}))
 
-	loggedHandler := LoggingMiddleware(mux)
+	loggedHandler := LoggingMiddleware(CORSMiddleware(corsConfig, mux))
 
 	if os.Getenv("ENVIRONMENT") != "docker" {
 		go (func() {

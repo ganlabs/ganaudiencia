@@ -125,10 +125,10 @@ func ExtractDriver() (string, error) {
 func ScraperDispatcher(lawsuit string) (Scraper, error) {
 	lawsuit = strings.TrimSpace(lawsuit) // Remove espaços em branco
 	switch {
-	case Match(`^08[0-9]{5}-[0-9]{2}\.20[0-9]{2}\.8\.19\.[0-9]{4}$`, lawsuit):
+	case Match(`^0[8-9]{1}[0-9]{5}-[0-9]{2}\.20[0-9]{2}\.8\.19\.[0-9]{4}$`, lawsuit):
 		log.Println("PJE-RJ")
 		return NewPjeRJ(), nil
-	case Match(`^0[0-9]{6}-[0-9]{2}\.20[0-9]{2}\.8\.26\.[0-9]{4}$`, lawsuit):
+	case Match(`^[0-9]{7}-[0-9]{2}\.20[0-9]{2}\.8\.26\.[0-9]{4}$`, lawsuit):
 		log.Println("ESAJ-SP")
 		return NewEsajSP(), nil
 	case Match(`^0[01][0-9]{7}20[0-9]{2}819[0-9]{4}$`, lawsuit):
