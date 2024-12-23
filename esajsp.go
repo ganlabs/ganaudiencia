@@ -81,7 +81,7 @@ func (s *EsajSP) Scrape(lawsuit string) (Hearing, error) {
 	}
 
 	// movement, err := driver.FindElement(selenium.ByXPATH, "/html/body/div[2]/table[7]/tbody/tr/td")
-	movement, err := driver.FindElement(selenium.ByXPATH, "//*[@id=\"processoSemAudiencias\"]")
+	movement, err := driver.FindElement(selenium.ByXPATH, "/html/body//h2[contains(text(), 'Audiências')]/following::table[1]//td[1]")
 
 	if err != nil {
 		return Hearing{}, fmt.Errorf("erro ao localizar o movimento: %w", err)
@@ -163,6 +163,93 @@ func detectAndFormatFirstDate(text string) string {
 func isValidDate(date string) bool {
 	_, err := time.Parse("02/01/2006", date)
 	return err == nil
+}
+
+// detectAndFormatFirstTime detecta a primeira ocorrência de hora no texto e a formata como "HH:MM"
+// Se nenhuma hora válida for encontrada, retorna "00:00"
+func detectAndFormatFirstTime(text string) string {
+	// Lista de padrões regex para diferentes formatos de hora
+	patterns := []string{
+		`\b([01]?\d|2[0-3]):([0-5]\d)\b`,             // Formato 24 horas: HH:MM
+		`\b([1-9]|1[0-2])\s?(AM|PM|am|pm)\b`,         // Formato 12 horas com AM/PM
+		`\b([01]?\d|2[0-3])\s?horas?\s?([0-5]\d)?\b`, // Formato com "horas" opcionalmente seguido por minutos
+	}
+
+	for _, pattern := range patterns {
+		re := regexp.MustCompile(pattern)
+		matches := re.FindStringSubmatch(text)
+
+		if len(matches) >= 3 {
+			var hour, minute string
+
+			// Formato 24 horas: HH:MM
+			if len(matches) == 3 && strings.Contains(pattern, ":") {
+				hour = matches[1]
+				minute = matches[2]
+			} else if len(matches) >= 2 && strings.ContainsAny(pattern, "AMPMampm") {
+				// Formato 12 horas com AM/PM
+				hour = matches[1]
+				minute = "00" // Assume minutos como "00" se não especificados
+
+				// Opcional: Converter para 24 horas se AM/PM estiver presente
+				if len(matches) == 3 {
+					meridiem := strings.ToLower(matches[2])
+					hourInt, _ := strconv.Atoi(hour)
+					if meridiem == "pm" && hourInt != 12 {
+						hourInt += 12
+					} else if meridiem == "am" && hourInt == 12 {
+						hourInt = 0
+					}
+					hour = fmt.Sprintf("%02d", hourInt)
+				}
+			} else if len(matches) >= 2 {
+				// Formato com "horas" e possivelmente minutos
+				hour = matches[1]
+				if len(matches) == 3 && matches[2] != "" {
+					minute = matches[2]
+				} else {
+					minute = "00"
+				}
+			}
+
+			// Adicionar zeros à esquerda se necessário
+			hour = fmt.Sprintf("%02s", hour)
+			minute = fmt.Sprintf("%02s", minute)
+
+			// Validar e retornar a hora formatada
+			timeStr := fmt.Sprintf("%s:%s", hour, minute)
+			if isValidTime(timeStr) {
+				return timeStr
+			}
+		}
+	}
+
+	return "00:00"
+}
+
+// isValidTime verifica se a string fornecida está no formato de hora válido "HH:MM"
+func isValidTime(timeStr string) bool {
+	parts := strings.Split(timeStr, ":")
+	if len(parts) != 2 {
+		return false
+	}
+
+	hour, err1 := strconv.Atoi(parts[0])
+	minute, err2 := strconv.Atoi(parts[1])
+
+	if err1 != nil || err2 != nil {
+		return false
+	}
+
+	if hour < 0 || hour > 23 {
+		return false
+	}
+
+	if minute < 0 || minute > 59 {
+		return false
+	}
+
+	return true
 }
 
 func (s *EsajSP) ValidateDate(date string) bool {
