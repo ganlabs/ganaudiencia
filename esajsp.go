@@ -82,19 +82,10 @@ func (s *EsajSP) Scrape(lawsuit string) (Hearing, error) {
 
 	expand, err := driver.FindElement(selenium.ByXPATH, "/html/body/div[2]/div[4]/a")
 
-	//if err != nil {
-	//	return Hearing{}, fmt.Errorf("erro ao selecionar movimentação: %w", err)
-	//}
-
 	if err == nil {
 		err = expand.SendKeys("\n")
 	}
 
-	//if err != nil {
-	//	return Hearing{}, fmt.Errorf("erro ao expandir movimentação: %w", err)
-	//}
-
-	//movement, err := driver.FindElement(selenium.ByXPATH, "/html/body/div[2]/table[7]/tbody/tr/td")
 	movement, err := driver.FindElement(selenium.ByXPATH, "/html/body/div[2]/table[2]")
 
 	if err != nil {
