@@ -5,8 +5,7 @@ all: build
 
 build:
 	@echo "Building..."
-	@go build -o dist/ganaudiencia .
-	@GOOS=windows go build -o dist/ganaudiencia.exe .
+	@go build -o dist/ganaudiencia.exe .
 
 
 # Run the application
@@ -43,6 +42,8 @@ watch:
             fi; \
         fi
 
+watch-windows:
+	@air
 
 # CLI
 dist:

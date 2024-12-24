@@ -80,8 +80,22 @@ func (s *EsajSP) Scrape(lawsuit string) (Hearing, error) {
 		classText = "VC"
 	}
 
-	// movement, err := driver.FindElement(selenium.ByXPATH, "/html/body/div[2]/table[7]/tbody/tr/td")
-	movement, err := driver.FindElement(selenium.ByXPATH, "/html/body//h2[contains(text(), 'Audiências')]/following::table[1]//td[1]")
+	expand, err := driver.FindElement(selenium.ByXPATH, "/html/body/div[2]/div[4]/a")
+
+	//if err != nil {
+	//	return Hearing{}, fmt.Errorf("erro ao selecionar movimentação: %w", err)
+	//}
+
+	if err == nil {
+		err = expand.SendKeys("\n")
+	}
+
+	//if err != nil {
+	//	return Hearing{}, fmt.Errorf("erro ao expandir movimentação: %w", err)
+	//}
+
+	//movement, err := driver.FindElement(selenium.ByXPATH, "/html/body/div[2]/table[7]/tbody/tr/td")
+	movement, err := driver.FindElement(selenium.ByXPATH, "/html/body/div[2]/table[2]")
 
 	if err != nil {
 		return Hearing{}, fmt.Errorf("erro ao localizar o movimento: %w", err)
@@ -95,9 +109,15 @@ func (s *EsajSP) Scrape(lawsuit string) (Hearing, error) {
 	var hearingDate string = "01/01/1900"
 	var hearingTime string = "00:00"
 
-	if strings.Contains(strings.ToUpper(movementText), "AUDIÊNCIA") && strings.Contains(strings.ToUpper(movementText), "DESIGNADA") {
-		hearingDate = detectAndFormatFirstDate(movementText)
-		hearingTime = "00:00"
+	lines := strings.Split(movementText, "\n")
+
+	for _, line := range lines {
+		if strings.Contains(strings.ToUpper(line), "DATA") && strings.Contains(strings.ToUpper(line), "HORA") && strings.Contains(strings.ToUpper(line), "SITUACÃO") {
+			fmt.Println(line)
+			hearingDate = detectAndFormatFirstDate(line)
+			hearingTime = detectAndFormatFirstTime(line)
+			break
+		}
 	}
 
 	return Hearing{
