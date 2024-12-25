@@ -5,7 +5,21 @@ all: build
 
 build:
 	@echo "Building..."
-	@go build -o dist/ganaudiencia.exe .
+	@if command -v rsrc > /dev/null; then \
+            rsrc -ico static/ganlabs.ico; \
+        else \
+            read -p "Go's 'rsrc' is not installed on your machine. Do you want to install it? [Y/n] " choice; \
+            if [ "$$choice" != "n" ] && [ "$$choice" != "N" ]; then \
+                go install github.com/akavel/rsrc@latest; \
+                rsrc -ico static/ganlabs.ico; \
+            else \
+                echo "You chose not to install rsrc. Exiting..."; \
+                exit 1; \
+            fi; \
+        fi
+	@go build -o dist/ganaudiencia .
+	@GOOS=windows go build -ldflags="-H windowsgui" -o dist/ganaudiencia.exe .
+	@echo "Build complete"
 
 
 # Run the application
@@ -42,20 +56,11 @@ watch:
             fi; \
         fi
 
-watch-windows:
-	@air
-
 # CLI
-dist:
-	@go build -o build/cli/linux/main cmd/cli/main.go
-	@cp -rf driver/chromedriver-linux64 build/cli/linux
-	@cp -rf driver/geckodriver-linux64 build/cli/linux
-	
-	@GOOS=windows go build -o build/cli/win/main.exe cmd/cli/main.go
-	@mkdir -p ~/rdpshare/gondwana
-	@cp build/cli/win/main.exe ~/rdpshare/gondwana
-	@cp -rf driver/chromedriver-win64 build/cli/win
-	@cp -rf driver/chromedriver-win64 ~/rdpshare/gondwana
+dist: build
+	@mkdir -p ~/rdpshare/gan
+	@cp dist/ganaudiencia.exe ~/rdpshare/gan
+
 
 
 cli:

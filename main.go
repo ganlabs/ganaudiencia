@@ -13,6 +13,8 @@ import (
 	"time"
 )
 
+// go: generate goversioninfo -icon = static/ganlabs.ico
+
 type cacheEntry struct {
 	hearing  Hearing
 	cachedAt time.Time
@@ -103,7 +105,7 @@ func main() {
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Content-Type", "Authorization"},
 		AllowCredentials: true,
-		MaxAge:           3600, // 1 hora
+		MaxAge:           3600,
 	}
 
 	switch Environment {

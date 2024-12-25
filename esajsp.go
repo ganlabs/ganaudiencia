@@ -83,7 +83,7 @@ func (s *EsajSP) Scrape(lawsuit string) (Hearing, error) {
 	expand, err := driver.FindElement(selenium.ByXPATH, "/html/body/div[2]/div[4]/a")
 
 	if err == nil {
-		err = expand.SendKeys("\n")
+		expand.SendKeys("\n")
 	}
 
 	movement, err := driver.FindElement(selenium.ByXPATH, "/html/body/div[2]/table[2]")

@@ -166,7 +166,6 @@ func (s *PjeRJ) FetchMovements(processNumber string) ([]string, error) {
 			break
 		}
 	}
-	// fmt.Println(processNumber)
 	return movements, nil
 }
 
@@ -244,7 +243,6 @@ func (s *PjeRJ) ValidateDate(date string) bool {
 		return false
 	}
 
-	// compare the date with the current date
 	if d.After(time.Now()) {
 		return true
 	}

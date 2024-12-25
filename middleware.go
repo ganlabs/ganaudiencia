@@ -32,8 +32,7 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 			"headers":      r.Header,
 			"request_body": requestBody,
 			"status":       responseRecorder.statusCode,
-			// "response_body": responseRecorder.body.String(),
-			"duration": time.Since(start).String(),
+			"duration":     time.Since(start).String(),
 		}
 
 		logData, err := json.Marshal(logEntry)
@@ -73,7 +72,6 @@ func CORSMiddleware(config CORSConfig, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		origin := r.Header.Get("Origin")
 
-		// Verifica se a origem está na lista de permitidas
 		allowed := false
 		for _, o := range config.AllowedOrigins {
 			if o == "*" || o == origin {
@@ -90,7 +88,6 @@ func CORSMiddleware(config CORSConfig, next http.Handler) http.Handler {
 			w.Header().Set("Vary", "Origin")
 
 			if r.Method == http.MethodOptions {
-				// Trata requisições pré-voo
 				w.Header().Set("Access-Control-Allow-Methods", join(config.AllowedMethods, ", "))
 				w.Header().Set("Access-Control-Allow-Headers", join(config.AllowedHeaders, ", "))
 				if config.MaxAge > 0 {
@@ -101,12 +98,10 @@ func CORSMiddleware(config CORSConfig, next http.Handler) http.Handler {
 			}
 		}
 
-		// Passa para o próximo handler
 		next.ServeHTTP(w, r)
 	})
 }
 
-// join é uma função auxiliar para concatenar strings com um separador
 func join(items []string, sep string) string {
 	result := ""
 	for i, item := range items {
