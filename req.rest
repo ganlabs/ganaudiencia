@@ -1,4 +1,4 @@
-@url = http://localhost:7085
+@url = http://localhost:3003
 
 #1066543-65.2024.8.26.0506
 #1002303-27.2024.8.26.0390
@@ -7,6 +7,7 @@
 
 @processorj = 0967745-27.2024.8.19.0001
 @processosp = 0011092-87.2024.8.26.0016
+@processotj = 0181718-82.2024.8.19.0001
 
 
 ###
@@ -16,6 +17,8 @@ GET {{url}}/audiencia?processo={{processorj}}
 GET {{url}}/audiencia?processo={{processosp}}
 
 ###
-GET {{url}}
+GET {{url}}/audiencia?processo={{processotj}}
 
 
+###
+GET https://www3.tjrj.jus.br/consultaprocessual/#/consultapublica?numProcessoCNJ={{processotj}}

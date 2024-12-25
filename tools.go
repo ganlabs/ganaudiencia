@@ -131,9 +131,9 @@ func ScraperDispatcher(lawsuit string) (Scraper, error) {
 	case Match(`^[0-9]{7}-[0-9]{2}\.20[0-9]{2}\.8\.26\.[0-9]{4}$`, lawsuit):
 		log.Println("ESAJ-SP")
 		return NewEsajSP(), nil
-	case Match(`^0[01][0-9]{7}20[0-9]{2}819[0-9]{4}$`, lawsuit):
+	case Match(`^0[0-1]{1}[0-9]{5}-[0-9]{2}\.20[0-9]{2}\.8\.19\.[0-9]{4}$`, lawsuit):
 		log.Println("TJRJ")
-		return nil, nil
+		return NewTjrj(), nil
 	default:
 		return nil, errors.New("invalid lawsuit")
 	}
