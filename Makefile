@@ -18,9 +18,10 @@ build:
             fi; \
         fi
 	@go build -o dist/ganaudiencia .
-	@GOOS=windows go build -ldflags="-H windowsgui" -o dist/ganaudiencia.exe .
+	@GOOS=windows go build -o dist/ganaudiencia.exe .
 	@echo "Build complete"
 
+# @GOOS=windows go build -ldflags="-H windowsgui" -o dist/ganaudiencia.exe .
 
 # Run the application
 run:

@@ -47,6 +47,7 @@ func (s *PjeRJ) FetchMovements(processNumber string) ([]string, error) {
 	}
 
 	defer driver.Quit()
+	defer driver.Close()
 
 	var processLink selenium.WebElement
 	attempts := 0

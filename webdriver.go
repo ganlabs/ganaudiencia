@@ -44,7 +44,6 @@ func GetWebdriver() (selenium.WebDriver, error) {
 		webdriver, err = selenium.NewRemote(caps, seleniumUrl)
 	default:
 		var driverport = GenerateRandomPort(999, 12000)
-		// opts := []selenium.ServiceOption{}
 		driverPath, err := ExtractDriver()
 
 		if err != nil {
