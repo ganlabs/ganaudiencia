@@ -395,7 +395,7 @@
           let text = cell.textContent.trim().replace(/"/g, '""');
           rowData.push(`"${text}"`);
         });
-        csvContent += rowData.join(',') + "\n";
+        csvContent += rowData.join(';') + "\n";
       });
 
       const now = new Date();
