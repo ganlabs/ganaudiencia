@@ -206,9 +206,9 @@ func (s *PjeRJ) ExtractHearingDates(lines []string) (date string, time string) {
 		if strings.Contains(line, "AUDIÊNCIA") && strings.Contains(line, "CANCELADA") {
 			break
 		}
-		if strings.Contains(line, "AUDIÊNCIA") && strings.Contains(line, "REDESIGNADA") {
-			break
-		}
+		// if strings.Contains(line, "AUDIÊNCIA") && strings.Contains(line, "REDESIGNADA") {
+		// 	break
+		// }
 		if strings.Contains(line, "AUDIÊNCIA") && strings.Contains(line, "DESIGNADA") {
 			regexDate := regexp.MustCompile(`(0[1-9]|[12][0-9]|3[01])/(0[1-9]|1[012])/(19|20)\d{2}`)
 			regexTime := regexp.MustCompile(`\b(\d{2}:\d{2})\b`)
