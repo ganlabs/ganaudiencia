@@ -15,20 +15,17 @@ import (
 )
 
 func ValidateFormat(input string) (string, error) {
-	// 1. Remover todas as pontuações: '-', '.', espaços
+
 	cleanInput := strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(input, "-", ""), ".", ""), " ", "")
 
-	// 2. Verificar se a entrada limpa possui exatamente 20 dígitos
 	if len(cleanInput) != 20 {
 		return "", errors.New("entrada inválida: o tamanho deve ser exatamente 20 dígitos")
 	}
 
-	// 3. Verificar se todos os caracteres são dígitos
 	if matched, _ := regexp.MatchString(`^\d{20}$`, cleanInput); !matched {
 		return "", errors.New("entrada inválida: deve conter apenas dígitos")
 	}
 
-	// 4. Validar Segmento 3 (dígitos 9 a 12) >= 2000
 	seg3 := cleanInput[9:13]
 	seg3Int, err := strconv.Atoi(seg3)
 	if err != nil {
@@ -38,13 +35,11 @@ func ValidateFormat(input string) (string, error) {
 		return "", errors.New("entrada inválida: o terceiro segmento deve ser >= 2000")
 	}
 
-	// 5. Validar Segmento 4 (dígito 13) seja '4' ou '8'
 	seg4 := cleanInput[13:14]
 	if seg4 != "4" && seg4 != "8" {
 		return "", errors.New("entrada inválida: o quarto segmento deve ser '4' ou '8'")
 	}
 
-	// 6. Validar Segmento 5 (dígitos 14 e 15) conforme Segmento 4
 	seg5 := cleanInput[14:16]
 	seg5Int, err := strconv.Atoi(seg5)
 	if err != nil {
@@ -61,17 +56,14 @@ func ValidateFormat(input string) (string, error) {
 		}
 	}
 
-	// 7. Segmento 6 (dígitos 16 a 19) já está validado como dígitos acima
-
-	// 8. Reformatar a string com pontuação
 	formattedInput := fmt.Sprintf(
 		"%s-%s.%s.%s.%s.%s",
-		cleanInput[:7],    // Segmento 1: primeiros 7 dígitos
-		cleanInput[7:9],   // Segmento 2: dígitos 8 e 9
-		cleanInput[9:13],  // Segmento 3: dígitos 10 a 13
-		cleanInput[13:14], // Segmento 4: dígito 14
-		cleanInput[14:16], // Segmento 5: dígitos 15 e 16
-		cleanInput[16:20], // Segmento 6: dígitos 17 a 20
+		cleanInput[:7],
+		cleanInput[7:9],
+		cleanInput[9:13],
+		cleanInput[13:14],
+		cleanInput[14:16],
+		cleanInput[16:20],
 	)
 
 	log.Println("Entrada formatada:", formattedInput)
@@ -80,13 +72,13 @@ func ValidateFormat(input string) (string, error) {
 }
 
 func GenerateRandomPort(quantity int, start int) int {
-	// Create a new random generator with a seed based on the current time
+
 	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
 	return rng.Intn(quantity) + start
 }
 
 func ExtractDriver() (string, error) {
-	// Determinar o nome do driver com base no sistema operacional
+
 	var chromedriverPath string
 	if runtime.GOOS == "windows" {
 		chromedriverPath = "driver/chromedriver.exe"
@@ -94,19 +86,16 @@ func ExtractDriver() (string, error) {
 		chromedriverPath = "driver/chromedriver"
 	}
 
-	// Ler o conteúdo do binário embutido
 	content, err := Chromedriver.ReadFile(chromedriverPath)
 	if err != nil {
 		return "", err
 	}
 
-	// Criar um diretório temporário para o driver
 	tempDir, err := os.MkdirTemp("", "chromedriver-*")
 	if err != nil {
 		return "", err
 	}
 
-	// Caminho completo do arquivo no diretório temporário
 	var tempFileName string
 	if runtime.GOOS == "windows" {
 		tempFileName = "chromedriver.exe"
@@ -115,7 +104,6 @@ func ExtractDriver() (string, error) {
 	}
 	tempFilePath := filepath.Join(tempDir, tempFileName)
 
-	// Escrever o conteúdo no arquivo temporário
 	if err := os.WriteFile(tempFilePath, content, 0755); err != nil {
 		return "", err
 	}
@@ -123,7 +111,7 @@ func ExtractDriver() (string, error) {
 	return tempFilePath, nil
 }
 func ScraperDispatcher(lawsuit string) (Scraper, error) {
-	lawsuit = strings.TrimSpace(lawsuit) // Remove espaços em branco
+	lawsuit = strings.TrimSpace(lawsuit)
 	switch {
 	case Match(`^0[8-9]{1}[0-9]{5}-[0-9]{2}\.20[0-9]{2}\.8\.19\.[0-9]{4}$`, lawsuit):
 		log.Println("PJE-RJ")

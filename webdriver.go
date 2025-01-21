@@ -58,7 +58,6 @@ func GetWebdriver() (selenium.WebDriver, error) {
 		log.Printf("Acessar o navegador em http://localhost:%d/wd/hub", driverport)
 		log.Println("Para sair, pressione CTRL+C")
 		log.Println(service)
-		// defer service.Stop()
 
 		seleniumUrl = fmt.Sprintf("http://localhost:%d/wd/hub", driverport)
 		webdriver, err = selenium.NewRemote(caps, seleniumUrl)

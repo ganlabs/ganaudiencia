@@ -46,11 +46,6 @@ func (s *Tjrj) Scrape(lawsuit string) (Hearing, error) {
 
 	fmt.Println(frame)
 
-	// err = driver.SwitchFrame(frame[0])
-	// if err != nil {
-	// 	return hr, fmt.Errorf("erro ao mudar para o iframe: %w", err)
-	// }
-
 	movementsButton, err := driver.FindElement(selenium.ByXPATH, "/html/body/app-root/app-detalhes-processo/section/div/div/div[1]/div[2]/button[2]")
 	if err != nil {
 		return hr, fmt.Errorf("erro ao localizar o botão de movimentos: %w", err)
@@ -71,7 +66,6 @@ func (s *Tjrj) Scrape(lawsuit string) (Hearing, error) {
 func waitForPageLoad(driver selenium.WebDriver, timeout time.Duration) error {
 	start := time.Now()
 	for {
-		// Verifica se o documento está pronto
 		state, err := driver.ExecuteScript("return document.readyState", nil)
 		if err != nil {
 			return fmt.Errorf("erro ao executar script: %v", err)
@@ -81,11 +75,10 @@ func waitForPageLoad(driver selenium.WebDriver, timeout time.Duration) error {
 			return nil
 		}
 
-		// Verifica se o timeout foi atingido
 		if time.Since(start) > timeout {
 			return fmt.Errorf("timeout ao carregar a página")
 		}
 
-		time.Sleep(500 * time.Millisecond) // Aguarda um pouco antes de tentar novamente
+		time.Sleep(500 * time.Millisecond)
 	}
 }

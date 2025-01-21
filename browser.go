@@ -14,13 +14,10 @@ func OpenBrowser(url string) error {
 	case "windows":
 		cmd = "cmd"
 		args = []string{"/c", "start"}
-		// log.Println("windows")
 	case "darwin":
 		cmd = "open"
-		// log.Println("macos")
 	default:
 		cmd = "xdg-open"
-		// log.Println("linux")
 	}
 	args = append(args, url)
 	return exec.Command(cmd, args...).Start()

@@ -14,7 +14,6 @@ func TestValidateFormat(t *testing.T) {
 		expected    string
 		expectError bool
 	}{
-		// Casos Válidos
 		{
 			name:        "Formato válido com pontuação - seg4=4, seg5=03",
 			input:       "1234567-89.2001.4.03.5678",

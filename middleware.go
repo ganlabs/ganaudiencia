@@ -18,7 +18,6 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 		if r.Body != nil {
 			bodyBytes, err := io.ReadAll(r.Body)
 			if err == nil {
-				r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes)) // Restore body for further use
 				requestBody = string(bodyBytes)
 			}
 		}
