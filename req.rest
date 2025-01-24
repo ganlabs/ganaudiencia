@@ -10,6 +10,8 @@
 @processorj = 0808803-63.2024.8.19.0075
 @processosp = 0011092-87.2024.8.26.0016
 @processotj = 0181718-82.2024.8.19.0001
+@processoal = 0702508-67.2025.8.02.0001
+@processoba = 0009443-83.2025.8.05.0001
 
 
 ###
@@ -21,6 +23,11 @@ GET {{url}}/audiencia?processo={{processosp}}
 ###
 GET {{url}}/audiencia?processo={{processotj}}
 
+###
+GET {{url}}/audiencia?processo={{processoal}}
+
+###
+GET {{url}}/audiencia?processo={{processoba}}
 
 ###
 GET https://www3.tjrj.jus.br/consultaprocessual/#/consultapublica?numProcessoCNJ={{processotj}}

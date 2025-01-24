@@ -1,3 +1,5 @@
 dist/
 tmp/
 rsrc_windows_amd64.syso
+target/
+src/

@@ -198,9 +198,8 @@
         .map(p => formatProcess(p.replace(/\D/g, '')))
         .filter(p => p.match(/^\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4}$/));
       document.getElementById('count').innerText = processList.length;
-      document.getElementById('consulted').innerText = 0; // Zera consultados ao clicar em Iniciar
+      document.getElementById('consulted').innerText = 0;
 
-      // Exibe o container da tabela ao iniciar as consultas
       document.getElementById('table-container').style.display = 'block';
 
       const resultsTable = document.getElementById('results');
@@ -220,7 +219,6 @@
 
       rows.forEach(({ processo, row }) => {
         const rawProcess = processo.replace(/\D/g, '');
-        // Chamadas normais, sem nocache, usando baseUrl
         fetchAudiencia(rawProcess, row, true, false);
       });
     }
@@ -229,7 +227,6 @@
       const dateCell = row.cells[1];
       const hourCell = row.cells[2];
 
-      // Seta mensagens de aguardo
       dateCell.textContent = 'Aguardando...';
       hourCell.textContent = 'Aguardando...';
 
@@ -244,10 +241,8 @@
           return response.json();
         })
         .then(data => {
-          // Se o processo for válido, exibe a data; se não, exibe a classe
           const audiencia = data.valida ? data.audiencia_data : data.classe;
 
-          // A coluna Data continua clicável para nova consulta
           dateCell.innerHTML = `
             <a href="#"
                onclick="fetchAudiencia('${rawProcess}', this.parentNode.parentNode, false, true); return false;">
@@ -255,11 +250,11 @@
             </a>
           `;
 
-          // A coluna Hora não precisa de link
-          // Se vier '00:00' no JSON, exibir vazio
           hourCell.textContent = (data.audiencia_hora === '00:00')
             ? ''
             : (data.audiencia_hora || '');
+
+          hourCell.textContent = data.valida ? data.audiencia_hora : '';
 
           if (incrementCount) {
             const consultedEl = document.getElementById('consulted');
@@ -275,7 +270,6 @@
                Erro ao consultar
             </a>
           `;
-          // Se der erro, a hora fica em branco
           hourCell.textContent = '';
         });
     }
@@ -283,7 +277,6 @@
     function retryProcess(rawProcess, linkElement) {
       const cell = linkElement.parentNode;
       const row = cell.parentNode;
-      // Faz nova consulta, forçando nocache
       fetchAudiencia(rawProcess, row, false, true);
     }
 
@@ -295,7 +288,6 @@
       rows.forEach(row => {
         const dateText = row.cells[1] ? row.cells[1].textContent.trim() : '';
         const hourText = row.cells[2] ? row.cells[2].textContent.trim() : '';
-        // Copiamos data e hora separados por tab
         audiencias.push(dateText + '\t' + hourText);
       });
 
