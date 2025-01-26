@@ -18,32 +18,44 @@ func NewPjeRJ() Scraper {
 }
 
 func (s *PjeRJ) Scrape(lawsuit string) (Hearing, error) {
-	mv, err := s.FetchMovements(lawsuit)
+	data, err := s.FetchData(lawsuit)
 	if err != nil {
 		log.Println(err)
 		return Hearing{}, err
 	}
 
-	hd, ht := s.ExtractHearingDates(mv)
+	hd, ht := s.ExtractHearingDates(data.Movements)
 	log.Println("Hearing date/time:", hd, ht)
 
 	hr := Hearing{
-		Lawsuit:     lawsuit,
-		Class:       s.ExtractClass(mv[0]),
-		HearingDate: hd,
-		HearingTime: ht,
-		IsValid:     s.ValidateDate(hd),
-		Movement:    mv,
+		Lawsuit:      lawsuit,
+		Class:        s.ExtractClass(data.Movements[0]),
+		HearingDate:  hd,
+		HearingTime:  ht,
+		IsValid:      s.ValidateDate(hd),
+		Movement:     data.Movements,
+		Author:       data.Author,
+		Jurisdiction: data.Jurisdiction,
+		Location:     data.Location,
+		Customer:     data.Customer,
 	}
 
 	return hr, nil
 }
 
-func (s *PjeRJ) FetchMovements(processNumber string) ([]string, error) {
+type PjeData struct {
+	Movements    []string
+	Author       string
+	Jurisdiction string
+	Location     string
+	Customer     string
+}
+
+func (s *PjeRJ) FetchData(processNumber string) (PjeData, error) {
 
 	driver, err := GetWebdriver()
 	if err != nil {
-		return nil, fmt.Errorf("erro ao obter o driver: %w", err)
+		return PjeData{}, fmt.Errorf("erro ao obter o driver: %w", err)
 	}
 
 	defer driver.Quit()
@@ -54,25 +66,25 @@ func (s *PjeRJ) FetchMovements(processNumber string) ([]string, error) {
 	for attempts < 10 {
 		err = driver.Get("https://tjrj.pje.jus.br/1g/ConsultaPublica/listView.seam")
 		if err != nil {
-			return nil, fmt.Errorf("erro ao acessar a página: %w", err)
+			return PjeData{}, fmt.Errorf("erro ao acessar a página: %w", err)
 		}
 
 		input, err := driver.FindElement(selenium.ByXPATH, "/html/body/div[5]/div/div/div/div[2]/form/div[1]/div/div/div/div/div[1]/div/div[2]/input")
 		if err != nil {
-			return nil, fmt.Errorf("erro ao localizar o campo de entrada: %w", err)
+			return PjeData{}, fmt.Errorf("erro ao localizar o campo de entrada: %w", err)
 		}
 		if err := input.SendKeys(processNumber); err != nil {
-			return nil, fmt.Errorf("erro ao enviar texto para o campo de entrada: %w", err)
+			return PjeData{}, fmt.Errorf("erro ao enviar texto para o campo de entrada: %w", err)
 		}
 
 		time.Sleep(1 * time.Second)
 
 		searchButton, err := driver.FindElement(selenium.ByXPATH, "/html/body/div[5]/div/div/div/div[2]/form/div[1]/div/div/div/div/div[8]/div/input")
 		if err != nil {
-			return nil, fmt.Errorf("erro ao localizar o botão de pesquisa: %w", err)
+			return PjeData{}, fmt.Errorf("erro ao localizar o botão de pesquisa: %w", err)
 		}
 		if err := searchButton.Click(); err != nil {
-			return nil, fmt.Errorf("erro ao clicar no botão de pesquisa: %w", err)
+			return PjeData{}, fmt.Errorf("erro ao clicar no botão de pesquisa: %w", err)
 		}
 
 		time.Sleep(1 * time.Second)
@@ -80,7 +92,7 @@ func (s *PjeRJ) FetchMovements(processNumber string) ([]string, error) {
 		processLink, err = driver.FindElement(selenium.ByXPATH, "/html/body/div[5]/div/div/div/div[2]/form/div[2]/div/table/tbody/tr/td[2]/a/b")
 		if err == nil {
 			if err := processLink.Click(); err != nil {
-				return nil, fmt.Errorf("erro ao clicar no link do processo: %w", err)
+				return PjeData{}, fmt.Errorf("erro ao clicar no link do processo: %w", err)
 			}
 			break
 		}
@@ -89,26 +101,66 @@ func (s *PjeRJ) FetchMovements(processNumber string) ([]string, error) {
 		if attempts == 20 {
 			driver.Quit()
 			fmt.Printf("falha ao encontrar o processo após 20 tentativas: %s", processNumber)
-			return []string{}, nil
+			return PjeData{}, nil
 		}
 	}
 
 	windows, err := driver.WindowHandles()
 	if err != nil {
-		return nil, fmt.Errorf("erro ao obter as janelas: %w", err)
+		return PjeData{}, fmt.Errorf("erro ao obter as janelas: %w", err)
 	}
 	if err := driver.SwitchWindow(windows[1]); err != nil {
-		return nil, fmt.Errorf("erro ao trocar para a nova janela: %w", err)
+		return PjeData{}, fmt.Errorf("erro ao trocar para a nova janela: %w", err)
 	}
 
 	time.Sleep(1 * time.Second)
 
+	author, err := driver.FindElement(selenium.ByXPATH, "/html/body/div[5]/div/div/div/div[2]/table/tbody/tr[2]/td/table/tbody/tr/td/div[1]/div/div[2]/span/div/table/tbody/tr[1]/td[1]/span/div/span")
+	if err != nil {
+		return PjeData{}, fmt.Errorf("erro ao obter o texto do autor: %w", err)
+	}
+
+	authorText, err := author.Text()
+	if err != nil {
+		return PjeData{}, fmt.Errorf("erro ao obter o texto do autor: %w", err)
+	}
+
+	jurisdiction, err := driver.FindElement(selenium.ByXPATH, "/html/body/div[5]/div/div/div/div[2]/table/tbody/tr[2]/td/table/tbody/tr/td/form/div/div[1]/div[3]/table/tbody/tr[2]/td[3]/span/div/div[2]")
+	if err != nil {
+		return PjeData{}, fmt.Errorf("erro ao obter o texto da jurisdição: %w", err)
+	}
+
+	jurisdictionText, err := jurisdiction.Text()
+	if err != nil {
+		return PjeData{}, fmt.Errorf("erro ao obter o texto da jurisdição: %w", err)
+	}
+
+	location, err := driver.FindElement(selenium.ByXPATH, "/html/body/div[5]/div/div/div/div[2]/table/tbody/tr[2]/td/table/tbody/tr/td/form/div/div[1]/div[3]/table/tbody/tr[2]/td[1]/span/div/div[2]")
+	if err != nil {
+		return PjeData{}, fmt.Errorf("erro ao obter o texto do local: %w", err)
+	}
+
+	locationText, err := location.Text()
+	if err != nil {
+		return PjeData{}, fmt.Errorf("erro ao obter o texto do local: %w", err)
+	}
+
+	customer, err := driver.FindElement(selenium.ByXPATH, "/html/body/div[5]/div/div/div/div[2]/table/tbody/tr[2]/td/table/tbody/tr/td/div[2]/div/div[2]/span/div/table/tbody/tr[1]/td[1]/span/div/span")
+	if err != nil {
+		return PjeData{}, fmt.Errorf("erro ao obter o texto do reu: %w", err)
+	}
+
+	customerText, err := customer.Text()
+	if err != nil {
+		return PjeData{}, fmt.Errorf("erro ao obter o texto do reu: %w", err)
+	}
+
 	currentURL, err := driver.CurrentURL()
 	if err != nil {
-		return nil, fmt.Errorf("erro ao obter a URL atual: %w", err)
+		return PjeData{}, fmt.Errorf("erro ao obter a URL atual: %w", err)
 	}
 	if err := driver.Get(currentURL); err != nil {
-		return nil, fmt.Errorf("erro ao acessar a URL do processo: %w", err)
+		return PjeData{}, fmt.Errorf("erro ao acessar a URL do processo: %w", err)
 	}
 
 	time.Sleep(1 * time.Second)
@@ -117,7 +169,7 @@ func (s *PjeRJ) FetchMovements(processNumber string) ([]string, error) {
 
 	class, err := driver.FindElement(selenium.ByXPATH, "/html/body/div[5]/div/div/div/div[2]/table/tbody/tr[2]/td/table/tbody/tr/td/form/div/div[1]/div[3]/table/tbody/tr[1]/td[3]/span/div/div[2]")
 	if err != nil {
-		return nil, fmt.Errorf("erro ao obter o texto da classe: %w", err)
+		return PjeData{}, fmt.Errorf("erro ao obter o texto da classe: %w", err)
 	}
 
 	classText, _ := class.Text()
@@ -126,7 +178,7 @@ func (s *PjeRJ) FetchMovements(processNumber string) ([]string, error) {
 
 	err = s.FetchMovementsFromPage(driver, &movements)
 	if err != nil {
-		return nil, err
+		return PjeData{}, err
 	}
 
 	page := 2
@@ -137,15 +189,15 @@ func (s *PjeRJ) FetchMovements(processNumber string) ([]string, error) {
 		}
 
 		if err := pageInput.Clear(); err != nil {
-			return nil, fmt.Errorf("erro ao limpar o campo de entrada: %w", err)
+			return PjeData{}, fmt.Errorf("erro ao limpar o campo de entrada: %w", err)
 		}
 
 		if err := pageInput.SendKeys(fmt.Sprintf("%d", page)); err != nil {
-			return nil, fmt.Errorf("erro ao enviar texto para o campo de entrada: %w", err)
+			return PjeData{}, fmt.Errorf("erro ao enviar texto para o campo de entrada: %w", err)
 		}
 
 		if err := pageInput.SendKeys(selenium.EnterKey); err != nil {
-			return nil, fmt.Errorf("erro ao pressionar Enter: %w", err)
+			return PjeData{}, fmt.Errorf("erro ao pressionar Enter: %w", err)
 		}
 
 		time.Sleep(1 * time.Second)
@@ -157,7 +209,7 @@ func (s *PjeRJ) FetchMovements(processNumber string) ([]string, error) {
 
 		err = s.FetchMovementsFromPage(driver, &movements)
 		if err != nil {
-			return nil, err
+			return PjeData{}, err
 		}
 
 		page++
@@ -167,7 +219,16 @@ func (s *PjeRJ) FetchMovements(processNumber string) ([]string, error) {
 			break
 		}
 	}
-	return movements, nil
+
+	pjeData := PjeData{
+		Movements:    movements,
+		Author:       authorText,
+		Jurisdiction: jurisdictionText,
+		Location:     locationText,
+		Customer:     customerText,
+	}
+
+	return pjeData, nil
 }
 
 func (s *PjeRJ) FetchMovementsFromPage(driver selenium.WebDriver, movements *[]string) error {
