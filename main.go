@@ -21,11 +21,12 @@ type cacheEntry struct {
 }
 
 var (
-	cache       = make(map[string]*cacheEntry)
-	cacheMu     sync.RWMutex
-	Environment = os.Getenv("ENVIRONMENT")
-	BaseURL     = os.Getenv("BASE_URL")
-	port        int
+	cache        = make(map[string]*cacheEntry)
+	cacheMu      sync.RWMutex
+	Environment  = os.Getenv("ENVIRONMENT")
+	BaseURL      = os.Getenv("BASE_URL")
+	SeleniumHost = os.Getenv("SELENIUM_HOST")
+	port         int
 )
 
 //go:embed driver/*

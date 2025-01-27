@@ -40,7 +40,13 @@ func GetWebdriver() (selenium.WebDriver, error) {
 
 	switch Environment {
 	case "docker":
+		seleniumHost := fmt.Sprintf("http://%s/wd/hub", SeleniumHost)
 		seleniumUrl = "http://selenium-hub:4444/wd/hub"
+
+		if seleniumHost != "" {
+			seleniumUrl = seleniumHost
+		}
+
 		webdriver, err = selenium.NewRemote(caps, seleniumUrl)
 	default:
 		var driverport = GenerateRandomPort(999, 12000)
