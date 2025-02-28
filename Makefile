@@ -57,10 +57,16 @@ watch:
             fi; \
         fi
 
+# Live Reload
+
+dev: watch
+	@echo "Watching..."
+
 # CLI
 dist: build
 	@mkdir -p ~/rdpshare/gan
 	@cp dist/ganaudiencia.exe ~/rdpshare/gan
+	@cp dist/ganaudiencia.exe ~/winshare/gan
 
 
 

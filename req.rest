@@ -1,4 +1,5 @@
-@url = http://audiencias.passoz.tech
+# @url = http://audiencias.passoz.tech
+@url = http://localhost:3003
 
 #1066543-65.2024.8.26.0506
 #1002303-27.2024.8.26.0390
@@ -13,6 +14,9 @@
 @processoal = 0702508-67.2025.8.02.0001
 @processoba = 0009443-83.2025.8.05.0001
 
+@processofail = 0805166-52.2024.8.19.0254
+
+
 @auth = Basic publico:gondim@098
 
 
@@ -22,6 +26,9 @@ Authorization: {{auth}}
 
 ###
 GET {{url}}/audiencia?processo={{processosp}}
+
+###
+GET {{url}}/audiencia?processo={{{{processofail}}}}
 
 ###
 GET {{url}}/audiencia?processo={{processotj}}
